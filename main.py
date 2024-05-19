@@ -8,18 +8,7 @@ from wtforms import StringField, SubmitField
 from wtforms.validators import DataRequired
 import requests
 
-'''
-Red underlines? Install the required packages first: 
-Open the Terminal in PyCharm (bottom left). 
-
-On Windows type:
-python -m pip install -r requirements.txt
-
-On MacOS type:
-pip3 install -r requirements.txt
-
-This will install the packages from requirements.txt for this project.
-'''
+MOVIES_API_KEY = '65d4ef8f0933ff74641f824a475d415e'
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = '8BYkEfBA6O6donzWlSihBXox7C0sKR6b'
@@ -83,6 +72,11 @@ class EditForm(FlaskForm):
     submit = SubmitField(u'Done')
 
 
+class AddForm(FlaskForm):
+    title = StringField(label=u"Movie Title")
+    submit = SubmitField(label="Add Movie")
+
+
 @app.route("/")
 def home():
     movies = db.session.execute(db.select(Movie)).scalars().all()
@@ -104,9 +98,22 @@ def edit():
     return render_template("edit.html", movie=selected_movie, form=form)
 
 
+@app.route('/delete')
+def delete():
+    movie_id = request.args.get('id')
+    selected_movie = db.get_or_404(Movie, movie_id)
+    db.session.delete(selected_movie)
+    db.session.commit()
+    return redirect(url_for('home'))
+
+
 @app.route("/add")
 def add():
-    return render_template("add.html")
+    form = AddForm()
+    if form.validate_on_submit():
+        new_movie = form.title.data
+
+    return render_template("add.html", form=form)
 
 
 if __name__ == '__main__':
